@@ -1,9 +1,140 @@
-include README.md
-include workspace/LICENSE
-include requirements.txt
-recursive-include includecpp/templates *
-recursive-include includecpp/generator *.cpp *.h
-recursive-include includecpp *.py
-recursive-include includecpp *.pyi
-recursive-include includecpp *.md
-recursive-include includecpp/vscode *.json
+# CSSC Licence
+
+Copyright (c) 2026 Lilias Hatterscheidt
+
+---
+
+## Plain-English summary (not the licence — the terms below are)
+
+**Part A — the toolchain** (compiler, interpreter, runtime, modules, standard
+library, LSP, package manager, documentation): MIT. Do anything you want with it,
+including commercially. Fork it, sell it, embed it, rename your fork. Just keep
+the copyright notice.
+
+**Part B — the IDE**: use it freely for anything, including commercially, and
+modify it for your own use. What you may not do is ship a modified version, or
+build another editor out of it. If you want a change in it, send it to me.
+
+---
+
+## 0. Components
+
+This licence covers two separately-licensed parts of the same project.
+
+**Part A ("the Toolchain")** — all source, binaries, and documentation in this
+project **except** the files identified as Part B. This includes the compiler,
+the interpreter, the runtime, the standard modules, the LSP/analyser, the
+package manager and installer, and the language reference.
+
+**Part B ("the IDE")** — the CSSC integrated development environment: its source
+code, interface code, layouts, icons, themes, and other assets, as marked in the
+repository.
+
+If a file's own header names its licence, that header wins for that file. If a
+file is ambiguous, it is Part A.
+
+---
+
+## Part A — MIT Licence
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in the
+Software without restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---
+
+## Part B — IDE Source-Available Licence
+
+### B.1 Grant
+
+Subject to the conditions below, you are granted a worldwide, royalty-free,
+non-exclusive licence to:
+
+a) **use and run** the IDE for any purpose, private or commercial, on any number
+   of machines, with no registration and no fee;
+
+b) **read and study** the source code without restriction;
+
+c) **modify** the source code for your own use, including inside an organisation
+   you belong to;
+
+d) **redistribute verbatim, unmodified copies** of the IDE, provided this licence
+   file and all copyright notices travel with it unchanged.
+
+### B.2 Conditions
+
+You may **not**, without prior written permission from the copyright holder:
+
+1. distribute, publish, or otherwise make available to third parties a **modified**
+   version of the IDE, or any work derived from its source code;
+
+2. incorporate the IDE, or a substantial portion of its source code or assets,
+   into another editor, IDE, or product;
+
+3. distribute the IDE under a different name, or in a way that suggests it is
+   your own work or an official release;
+
+4. remove, obscure, or alter the copyright notices, licence text, or authorship
+   information in the IDE.
+
+Clause B.2.1 does not restrict changes you keep to yourself. Modify your own copy
+as much as you like; the restriction begins at distribution.
+
+### B.3 Contributions
+
+If you send a modification, patch, or asset for inclusion in the IDE, you grant
+the copyright holder a perpetual, irrevocable, worldwide, royalty-free licence to
+use, modify, relicense, and distribute it as part of the project. You keep your
+own copyright in what you wrote. Nothing obliges the copyright holder to accept a
+contribution.
+
+### B.4 Name and marks
+
+This licence grants no rights in the name "CSSC", the project's logos, or any
+other mark of the copyright holder, beyond the attribution required above.
+
+### B.5 Warranty and liability
+
+The IDE is provided "AS IS", without warranty of any kind, express or implied,
+including but not limited to warranties of merchantability, fitness for a
+particular purpose, and non-infringement. In no event shall the copyright holder
+be liable for any claim, damages, or other liability arising from or in
+connection with the IDE or its use.
+
+### B.6 Termination
+
+This licence terminates automatically if you breach section B.2. It is reinstated
+if you cure the breach within 30 days of becoming aware of it and do not breach
+again. Termination does not affect the rights of anyone who received a copy from
+you in compliance with this licence.
+
+### B.7 Severability
+
+If any provision of Part B is held unenforceable, the remaining provisions stay
+in force, and the unenforceable provision applies to the maximum extent permitted.
+
+---
+
+## Notes on scope
+
+Part A is open source under the Open Source Definition. **Part B is not** — it is
+source-available. Describe them accordingly: "MIT-licensed toolchain,
+source-available IDE" is accurate; "the whole project is open source" is not.
+
+This licence restricts copying the IDE's **code and assets**. It does not, and
+cannot, stop someone from building a different editor that looks like it or works
+like it, written from scratch. Copyright protects expression, not design
+decisions.
