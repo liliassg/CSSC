@@ -1,0 +1,18 @@
+{
+  "name": "CSSC",
+  "version": "cssc7.1.2",
+  "major": "7",
+  "edition": "release",
+  "author": "",
+  "notes_header": "",
+  "notes_text": "official CSSC7.1",
+  "built": "2026-08-15 19:20",
+  "pyc_magic": "cb0d0d0a",
+  "modules": 280,
+  "bundled_deps": [
+    "click",
+    "colorama",
+    "typing_extensions"
+  ],
+  "has_exes": false
+}
