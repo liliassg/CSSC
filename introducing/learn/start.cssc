@@ -1,0 +1,257 @@
+// This code focuses on launching a visual and interactive CSSC presenter
+#include("colors") color;
+#include("cssc.sys") sys;
+#auto[auto] print_str; // we allocate (own) a JIT (Runtime) Autosized Heterogen Variable alias print_str  (only x86_46 backend!)
+#define(print_str) {
+    //d \r137g139b141print string with style. print_str(\r186g28b189vec<char>\r137g139b141 or \r186g28b189string\r137g139b141\r137g139b141,\r186g28b189 1/0\r137g139b141\r137g139b141)
+    //d \r137g139b141arg1 \r231g35b140 -> ref \r137g139b141(\r231g35b140 0\r137g139b141)\r137g139b141 or\r231g35b140 -> copy \r137g139b141(\r231g35b140 1\r137g139b141)
+    //d \r137g139b141arg2 -> sleep dur (seconds) default 0.40
+    #scanp(print_str, auto, 0) text; // expect transient or owner
+    #scanp(print_str, int, 1) owner = 0; // default transient
+    #scanp(print_str, auto, 2) sleepdur = 0.40;
+    #scanp(print_str, auto, 3) color = false;
+    #auto[vector<string>] char_map;
+    #req[string] *str;
+    #req[color] *color;
+    #auto[auto] colors;
+    #define(colors) {
+        #scanp(colors, int, 0) colorid;
+        if (colorid == 0) { return 9014157; }    // #898B8D
+        if (colorid == 1) { return 4281
+        192481; } // #FF2DD021
+    }
+    if (cssc::typeof(text) == cssc::typeof(str)) {
+        select (text) ?char {
+            char_map.push_back(&char);
+            jump;
+        }
+        if (owner == 1) {
+            #delete[txt];
+        }
+    } else {
+        char_map = text;
+        if (owner == 0) {
+            #delete[text];
+        } 
+    }
+    #stack[bool, 8] isNewline;
+    if (color != false) {
+        colors(color) col;
+    }
+    select (char_map) ?char {
+        if (char == "\n") {
+            isNewline = true;
+            jump;
+        }
+        if (isNewline) {
+            cssc::outln();
+            isNewline = false;
+            jump;
+        }
+        if (color != false) {
+            color::c_out(char, col);
+        } else {
+            cssc::out(char);
+        }
+        cssc::sleep(sleepdur*1000);
+        jump;
+    }
+    cssc::outln();
+    #delete[isNewline];
+    #delete[char_map];
+    
+}
+sector functions<> {
+public:
+    #auto[auto] ownership_allocations;    
+    #auto[auto] functions;    
+    #auto[auto] representation;    
+    #auto[auto] reference_vs_copy;    
+    #auto[auto] selection;    
+    #auto[auto] sectors;    
+    #auto[auto] objects;    
+    #auto[auto] mutiers;    
+    #auto[auto] usagemethods_and_selfawareness;    
+    #auto[auto] realworld_example;
+    
+    #define(ownership_allocations) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("Ownership and Allocation/Deallocation", 0, 0.03, 0);
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("In this section, i explain how the CSSC ownership works\n we start by using\n #stack[int, 32] alloc = 30;", 0, 0.09, 0);
+        print_str("Here we allocate an i32 on the STACK (SP)", 0, 0.09, 0);
+        print_str("Any Allocation except\n #auto\n needs an explicit deletion wtith\n #delete[allocation];", 0, 0.05, 0);
+        
+        print_str("so there is this one specif allocation rule:\n what you create, you delete", 0, 0.1, 0);
+        print_str("so any new allocation must be owned and deleted\n so this includes functions\n foo() returned;\n #delete[returned];", 0, 0.06, 0);
+        print_str("the keyword mirror is very alike the return, but it doesnt quit its functions scope so you can cleanup", 0, 0.05, 0);
+        print_str("the usage is:\n    mirror &value\n for passing deepcopy of the value. this means it allocates a new memoryspace and copies its value\n    mirror *value\n for passing a reference, this uses the pointer for direct acsess, no allocation", 0, 0.05, 0);
+        print_str("if you dont delete a value, in native it will leak memory\n while in interpreter it is leak-safe", 0, 0.05, 0);
+        print_str("lets take a look:\n cssc::outln(notExisting);", 0, 0.06, 0);
+        cssc::outln(NotExisting);
+        print_str("any OOB or known UB will road to 0x0", 0, 0.06, 0);
+        
+        
+        
+    }
+
+    #define(functions) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("Functions and whats behind", 0, 0.1, 0);
+        print_str
+        ("---------------------------", 0, 0.02, 0);
+        print_str("A functions is nothing special", 0, 0.06, 0);
+        print_str("we can take a look:", 0, 0.06, 0);
+        print_str("#stack[int, 32] i32 = 11;", 0, 0.06, 0);
+        #stack[int, 32] i32 = 11;
+        print_str("> cssc::outln(i32);", 0, 0.06, 0);
+        cssc::outln(i32);
+        print_str("in CSSC a function is the same as a data-variable", 0, 0.06, 0);
+        print_str("then we define it, wrapping the variable with its adress:\n#define(i32) { return 32; }\n this then represents a map<auto, int: adress>", 0, 0.06, 0);
+        #define(i32) {
+            return 32;
+        }
+        print_str("> cssc::outln(i32[0], i32[1]);", 0, 0.06, 0);
+        cssc::outln(i32[0], i32[1]);
+        print_str("the [0] index represents the last calculated value\n the [1] index represents the adress of this scope", 0, 0.06, 0);
+        print_str("so by calling it, its allocation slot is used for the storage, in that case its the value 11\n so if we execute this function now, see what happens:", 0, 0.06, 0);
+        print_str("> i32();", 0, 0.06, 0);
+        i32();
+        print_str("> cssc::outln(i32[0], i32[1]);", 0, 0.06, 0);
+        cssc::outln(i32[0], i32[1]);
+    }
+    #define(representation) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("Intern Representation", 0, 0.1, 0);
+        print_str("---------------------------", 0, 0.02, 0);
+        
+    }
+    
+    #define(reference_vs_copy) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("Reference vs Copy", 0, 0.1, 0);
+        print_str("---------------------------", 0, 0.02, 0);
+        
+    }
+    #define(selection) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("The selection", 0, 0.1, 0);
+        
+        print_str("---------------------------", 0, 0.02, 0);
+        
+    }
+    #define(sectors) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("Sectors", 0, 0.1, 0);
+        print_str("---------------------------", 0,
+         0.02, 0);
+        
+    }
+    #define(objects) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("Objects", 0, 0.1, 0);
+        print_str("---------------------------", 0, 0.02, 0);
+        
+    }
+    #define(mutiers) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("The Mutier", 0, 0.1, 0);
+        print_str("---------------------------", 0, 0.02, 0);
+        
+    }
+    #define(usagemethods_and_selfawareness) {
+        
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("Usage-Methods and selfawareness", 0, 0.1, 0);
+        
+        print_str("---------------------------", 0, 0.02, 0);
+    }
+    #define(realworld_example) {
+        #req[print_str] print_str;
+        print_str("---------------------------", 0, 0.02, 0);
+        print_str("Real World Example", 0, 0.1, 0);
+        print_str("---------------------------", 0, 0.02, 0);
+    }
+    
+    #auto[array<auto>] i32_ptr = {
+        ownership_allocations[1], functions[1], representation[1], reference_vs_copy[1],
+        selection[1], sectors[1], objects[1], mutiers[1], usagemethods_and_selfawareness[1],
+        realworld_example[1]};
+} free {
+    #delete[ownership_allocations];
+    #delete[functions];
+    #delete[representation];
+    #delete[reference_vs_copy];
+    #delete[selection];
+    #delete[sectors];
+    #delete[objects];
+    #delete[mutiers];
+    #delete[usagemethods_and_selfawareness];
+    #delete[realworld_example];
+}
+#stack[string, 8] string;
+#auto[array<string>] argv = sys::argv();
+#auto[vector<string] cli = { "--ownership", "--functions", "--representation", "--ref-vs-copy", "--selection", "--sectors", "--objects", "--mutier", "--usage", "--rw", "--all" }
+#stack[bool, 8] invalid;
+if (!argv.empty()) {
+    select (argv) ?agument {
+        if (argument == 0x0) {
+            cssc::outln("no arguments loaded.");
+            break;
+        }
+        if (!cli.contains(&argument)) {
+            cssc::outln("wrong usage! unkown:", &argument);
+            cssc::outln("to only see one specific section use:");
+            select (cli) ?c {
+                cssc::outln(c);
+                jump;
+            }
+            invalid = true;
+            break;
+        }
+        cssc::outln(argument);
+        if (argument == "--ownership") { functions::ownership_allocations();}
+        if (argument == "--functions") { functions::functions();}
+        if (argument == "--representation") { functions::representation();}
+        if (argument == "--ref-vs-copy") { functions::reference_vs_copy();}
+        if (argument == "--selection") { functions::selection();}
+        if (argument == "--sectors") { functions::sectors();}
+        if (argument == "--objects") { functions::objects();}
+        if (argument == "--mutier") { functions::mutiers();}
+        if (argument == "--usage") { functions::usagemethods_and_selfawareness();}
+        if (argument == "--rw") { functions::realworld_example();}
+        jump;
+    }
+    
+    if (!argv.contains("--all") && invalid) {
+        exit(0);
+    }
+}
+#auto[auto] hoefunc;
+#define(hoefunc) { return null; }
+cssc::outln("Thank you for your interest in CSSC. In this Program, i will explain u the important things about CSSC!");
+select (functions::i32_ptr) ?ptr {
+    hoefunc[1] = ptr;
+    hoefunc();
+    cssc::sleep(1.5 * 1000);
+    jump;
+}
+
+#free[color];
+#free[sys];
+#free[functions];
+#delete[print_str];
+#delete[string];
+#delete[hoefunc];
+#delete[cli];
+#delete[argv];
+#delete[invalid];

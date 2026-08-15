@@ -1,0 +1,94 @@
+// This is a example usage file of the mutier
+#include("cssc.dll") dll;
+#include("stdio") stdio;
+#auto[string] db_pagetable = "pt.dll";
+#auto[string] db = "/mutier_storage/" + db_pagetable;
+#auto[string] targetfile = "/mutier_storage/target.cssc";
+
+// Read (or Write) Standard Pagetable file
+#auto[auto] read;
+#auto[auto] write;
+#auto[auto] load;
+#define(read) {
+    #req[stdio] *stdio;
+    #req[db] *db;
+    if (!stdio::exists(db)) {
+        stdio::createfile(db);
+        cssc::outln("created file");
+        return false;
+    }
+    #stack[string, 256] mt = "mutieradress";
+    mirror &mt;
+    #delete[mt];
+}
+#define(write) {
+    #req[stdio] *stdio;
+    #req[dll] *dll;
+    #req[db] *db;
+    #stack[int, 64] i64_id = cssc::random(999, 999999999);
+    #stack[string, 256] mt = "mutieradress";
+    dll::createsection(db, mt);
+    dll::link(db, mt, i64_id, mt);
+    mirror &mt;
+    #delete[mt];
+    #delete[i64_id];
+}
+#define(load) {    
+    //d Load Standard PT
+    #req[read] *read;
+    #req[write] *write;
+    read() readen;
+    if (!readen) {
+        return write();
+    }
+    mirror &readen;
+    #auto[string] msg = "acssessing PGT{" + readen + "}";
+    cssc::outln(msg);
+    #delete[msg];
+    #delete[readen];
+}
+load() loaded;
+dll::get(db, loaded, loaded) pt_i64;
+// Now we allocate something
+#stack[string, 128] %<pt_i64>callme = "Hello";
+#auto[string] key = "global_s0";
+%<pt_i64>key = callme[1];
+dll::link(db, key, callme[1]);
+cssc::outln(dll::get(db, key));
+#delete[key];
+cssc::run(targetfile);
+cssc::outln("running target file... \n waiting 4s...");
+cssc::sleep(6*1000); // 6s waiting
+#auto[auto] dllentrys = dll::listentries();
+cssc::outln("listing all entrys:");
+select (dllentrys) ?entry {
+    #auto[auto] val = dllentrys[entry.pos()];
+    %<pt_i64>val val_i64;
+    #auto[string] msg = "PGT{" + pt_i64 + "|" + val + "} - " + val_i64;
+    cssc::outln(msg);
+    #delete[msg];
+    #pdelete[val_i64];
+    #delete[val];
+    jump;
+}
+// Did the target runtime respond on our shared mutier key `callme`?
+if (callme == "Hey") {
+    cssc::outln("Found Respond 'Hey'");
+}
+if (callme == "Hello") {
+    cssc::outln("Not Responded (still Hello)");
+}
+#delete[loaded];
+#delete[db_pagetable];
+#delete[db];
+#delete[read];
+#delete[write];
+#delete[load];
+#delete[pt_i64];
+#delete[dllentrys];
+#delete[targetfile];
+
+
+#free[dll];
+#free[stdio];
+

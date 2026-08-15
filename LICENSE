@@ -1,0 +1,9 @@
+include README.md
+include workspace/LICENSE
+include requirements.txt
+recursive-include includecpp/templates *
+recursive-include includecpp/generator *.cpp *.h
+recursive-include includecpp *.py
+recursive-include includecpp *.pyi
+recursive-include includecpp *.md
+recursive-include includecpp/vscode *.json

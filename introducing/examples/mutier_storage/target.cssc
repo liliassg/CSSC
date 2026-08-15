@@ -1,0 +1,38 @@
+// target file, unimportant
+
+#include("cssc.dll") dll;
+#auto[string] db = "pt.dll";
+#auto[string] key = "mutieradress";
+dll::get(db, key, key) i64;
+if (%<i64>"callme" == "Hello") {
+    %<i64>"callme" = "Hey";
+}
+#auto[auto] content = dll::listentries(db);
+#stack[int, 32] n = 0;
+#stack[int, 8] max = 15;
+#stack[string, 128] next;
+#define(next) {
+    #req[n] *n;
+    #stack[string, 128] id = "alloca_" + n;
+    mirror &id;
+    n += 1;
+    #delete[id];
+    
+    
+}
+while (max != 0) {
+    next() id;
+    #stack[int, 32] rv = cssc::random(1, 100);
+    %<i64>id = rv;
+    dll::link(db, id, rv);
+    max -= 1;
+    #delete[rv];
+    #delete[id];
+}
+#delete[db];
+#delete[key];
+#delete[i64];
+#delete[content];
+#delete[n];
+#delete[next];
+#free[dll];

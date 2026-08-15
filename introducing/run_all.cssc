@@ -1,0 +1,40 @@
+#include("stdio") st;
+cssc::outln("Running all files...");
+cssc::sleep(1000);
+#auto[string] all = st::read("all.txt");
+#auto[string] tmp;
+#auto[vector<string>] files;
+select (all) ?c {
+    if (c == "\n") {
+        files.push_back(&tmp);
+        tmp = "";
+        jump;
+    }
+    tmp += &c;
+    jump;
+    
+}
+select (files) ?f {
+    cssc::outln();
+    #auto[string] name = "running <" + f + ">";
+    cssc::outln(name);
+    cssc::outln();
+    #delete[name];
+    cssc::run(f) worked;
+    if (!worked) {
+        #auto[string] err = "error executing file: " + f;
+        cssc::outln(err);
+        #delete[err];
+        jump;
+    } else {
+        #auto[string] suc = "file executed sucsessfully: " + f;
+        cssc::outln(suc);
+        #delete[suc];
+    }
+    jump;
+    
+}
+#delete[all];
+#delete[tmp];
+#delete[files];
+#free[st]; 

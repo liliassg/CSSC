@@ -1,0 +1,13 @@
+#stack[int, 8] rt = 1;
+#stack[int, 32] ct = 0;
+#define(rt) {
+    #req[ct] *gl_counter;
+    #scanp(rt, string, 0) *r0; // transient input
+    if (r0 == 0x0) {
+        r0 = "-";
+    }
+    #stack[string, 256] txt = gl_counter + ": " + r0 + ".";
+    cssc::outln(txt);
+    #delete[txt];
+    gl_counter = gl_counter + 1;
+}

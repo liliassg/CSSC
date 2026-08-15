@@ -1,0 +1,72 @@
+#include('gipeo') gipeo;
+#include('tft')         tft;
+#DEFINE START_TIME 0;
+#i2c[0, 4, 5]           bus;
+bus.begin(400000);
+#oled[128, 64, 12, 14, 0x3C] display;
+object VideoDriver<*display, *tft> {
+    #stack[float, 64]   VideoDriver->shutdownAt = 2000000.0;
+    #stack[string, 256] VideoDriver->title = "VideoDriver v1.0.1";
+    #stack[string, 256] VideoDriver->tag   = "VideoDriver " + &VideoDriver->shutdownAt + "s";
+    #stack[int, 32]     VideoDriver->frame = START_TIME;
+    #stack[int, 32]     VideoDriver->box_x = 0;
+    #stack[int, 32]     VideoDriver->dir   = 4;
+
+    boot:
+        display.begin();
+        display.fill(tft::BLACK);
+        display.text(4, 16, VideoDriver->title, tft::WHITE, 1);
+        display.text(4, 32, VideoDriver->tag,   tft::WHITE, 1);
+        #stack[string, 64] msg = "boot ok";
+        display.text(4, 48, msg, tft::WHITE, 1);
+        display.show();
+        #delete[msg];
+        cssc::sleep(2500);
+    tick:
+        display.fill(tft::BLACK);
+        cssc::outln(VideoDriver->frame);
+        display.text(0, 25, cssc::uptime(), tft::WHITE, 1);
+        #stack[string, 1028] flabel = "CSSC Embedded (" + VideoDriver->frame + ")";
+        display.text(0, 0, flabel, tft::WHITE, 1);
+        #delete[flabel];
+        display.line(0, 39, 127, 38, tft::WHITE);
+        display.fillrect(VideoDriver->box_x, 46, 14, 14, tft::WHITE);
+        VideoDriver->box_x += VideoDriver->dir;
+        if (VideoDriver->box_x > 114) { VideoDriver->dir = -4; }
+        if (VideoDriver->box_x < 0)   { VideoDriver->dir =  4; }
+        display.show();
+        VideoDriver->frame += 1;
+        mirror VideoDriver->frame;
+} free {
+    display.fill(tft::BLACK);
+    #stack[string, 128] bye1 = "VideoDriver";
+    #stack[string, 128] bye2 = "shutdown";
+    display.text(4, 24, bye1, tft::WHITE, 1);
+    display.text(4, 40, bye2, tft::WHITE, 1);
+    display.show();
+    #delete[bye1];
+    #delete[bye2];
+}
+
+VideoDriver() vd;
+vd.boot();
+
+
+while (true) {
+    vd.tick() r;
+    #delete[r];
+    cssc::sleep(20);
+    #stack[float, 64] uptime = cssc::uptime();
+    if (uptime >= vd->shutdownAt) {
+        #delete[uptime];
+        break;
+    #delete[uptime];
+    }
+}
+#delete[vd];
+#delete[bus];
+#delete[display];
+
+#free[gipeo];
+#free[tft];
+#delete[START_TIME];

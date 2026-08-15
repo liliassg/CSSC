@@ -1,0 +1,41 @@
+#include("stdio") stdio;
+#load["MODprintf.cssc"] selectmod;
+// The Basics of CSSC are the right usage, not only the code logic itself, lets take a look:
+// For example we can use structures rather then simple adress for boundarys and modularity such as a private isolated space:
+// sectors:
+sector __PUBLIC__<stdio> {
+private:
+    #stack[int, 64] func;
+    #define(func) { // This function is fully private. Noone can acsess this sector unit, except for here other declared functions
+        #auto[string] password = stdio::read("/$&%$)&{^!$$*_file+2&?\33.db");
+        process(*password, "&&section)3") password; // you also can acsess any other private function
+        return *password;
+    }
+    #stack[int, 32] pswd = 3232;
+    #stack[string] PrivategetPswd; // Getter, known form other languages like C++ -> ONLY WORKS INSIDE PRIVATE
+    #define(PrivategetPswd) {
+        OPEN.push_back(pswd);
+    }
+public:
+    #stack[string, 1028] greeting;
+    #define(greeting) { // Those functions who live in public:, are acsessable from anywhere
+        return "Hello World!"; // this returns a new allocation
+    }
+    #stack[string] getPswd; // Getter, known form other languages like C++ -> ONLY WORKS INSIDE PRIVATE
+    #define(getPswd) {
+        return *pswd;
+    }    
+} free {
+    #delete[func];
+    #delete[pswd];
+    #delete[getPswd];
+    #delete[PrivategetPswd];
+    #delete[OPEN];
+}
+selectmod::printf("private-acsess: %", {__PUBLIC__::func()});
+selectmod::printf("public-acsess:  %", {__PUBLIC__::greeting()});
+selectmod::printf("public-getter, acsessing private: %", {__PUBLIC__::getPswd()});
+selectmod::printf("private-getter, acsessing private: % -> %", {__PUBLIC__::PrivategetPswd(), __PUBLIC__::OPEN});
+selectmod::printf("sector: %, invalid: %", {__PUBLIC__, __PUBLIC__::notExisting()});
+#delete[stdio];
+#free[selectmod];

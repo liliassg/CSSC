@@ -1,0 +1,44 @@
+// References and Copys. What are they and why should i use them?
+// well, they are very importrant for the precise control of the control flow, just see:
+// COPY = &
+// REFERENCE = * or default
+#stack[int, 32] IAmAIntegar = 100;
+#stack[int, 32] IAmTheCopyOfTheIntegar = &IAmAIntegar; // & always makes a deep-copy
+#stack[int, 32] IAmTheRefOfTheIntegar = IAmAIntegar; // nothing or * makes it use the reference
+IAmAIntegar = 200; // so When we change IAmAIntegar to 200, IAmTheRefOfTheIntegar will now be 200 too
+cssc::outln(IAmTheCopyOfTheIntegar); // But while we changed IAmAIntegar and passed then a & it doesnt get touched
+cssc::outln(IAmAIntegar);
+cssc::outln(IAmTheRefOfTheIntegar);
+// The CSSC ownership is simple. what you create you delete
+// i know it may sound very annoing but for solving this user pain i made a visual studio lsp extension and an IDE
+// The IDE you see is the one which is already fully powered by CSSC itself
+#stack[int, 32] alloc; // This is our allocation alias alloc
+alloc += 32; // You can normaly work with your variable
+cssc::to_string(alloc) string_alloc; // and use typedef methods
+#delete[string_alloc]; // At the moment the IP (Instruction Pointer) reaches this part of code
+// that means any usage now will return value 0x0 and no OOB. for disabling this saftey feature for space, use --small or --O2
+// you need to follow the ownership, otherwise you can leak memory or cause on embedded devices funny LoadStorageProhibed errors
+#stack[int, 8] value = 256; // Because CSSC stands for - Control Specified Source Compiling - you can manualy control the bit usage
+// We remember in binary (x86_64 & others) a number is represented as 8 possible one's and zeros's
+// 256 128 64 32 16 8 4 2 1
+//  0   0   0  0  0 0 1 0 1 -> 5
+//  0   0   0  0  0 0 1 1 1 -> 7
+//  0   0   0  0  1 0 1 0 0 -> 20
+cssc::outln(value);
+// or you make it to a function
+#define(value) {
+    #stack[bind] sparkasse_solingen = {"soligngen", "mustermann" ; "83232562", "DE000039123692"}; // as example any data as bind 
+    mirror &sparkasse_solingen[1][0]; // on binds we acsess them as 2D space: bind{pairA, pairA;, pairB, pairB}
+                                     //                                          bind[0][0] -> pair A bind[0][0] -> pair B 
+                                     //                                          bind[0][0] -> index 0 bind[0][1] -> index 1
+    #delete[sparkasse_solingen]; // we mirror, so we can continue the IP and delte the full variable then
+    // we passed in mirror a deepcopy (&) so it stayes alive but also means this is a new allocation
+}
+value() newallocation; // so it gets a new owner you must handle
+// btw: If you already asked yourself why you declare a function as a normal variable:
+// In CSSC ther is less abstraction and for the Runtime and CPU itself, a function is nothing more then a Adress in the RAM
+// The adress where the code is stored is held in index 1 and the last calculated value is in index 0
+// so the output will be {"83232562", 82396236483} wich is a map<auto, int>
+cssc::outln(value[1]);
+cssc::outln(newallocation);
+#delete[newallocation];

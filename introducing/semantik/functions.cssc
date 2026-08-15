@@ -1,0 +1,81 @@
+// load our helpers
+#load("__helper__.cssc") h; // any included file is a sector, acsessable with ::, like the cssc:: sector which is built in
+
+#stack[int, 64] var = 201;
+#stack[float, 64] fvar = 32.221;
+h::rt("var=");
+cssc::outln(var);
+h::rt("fvar=");
+cssc::outln(fvar);
+#define(fvar) {
+    #req[var] &n; // require var as a copy
+    #stack[float, 64] orig;
+    #stack[map<int, int>, 256] forig;
+    if (cssc::typeof(n) == cssc::typeof(forig)) {
+        n = n[0]; // if n is a function (map) we only use func[0], cause this is its variable
+    }
+    if (cssc::typeof(n) != cssc::typeof(orig)) {
+        cssc::to_float(n);
+    }
+    #delete[orig];
+    #delete[forig];
+    return n+2.0; // return a new evaluation of n + 2.0
+}
+h::rt("fvar=");
+cssc::outln(fvar);
+var = 92;
+h::rt("var=");
+cssc::outln(var);
+#define(var) {
+    #req[fvar] &x; // get coyp of global fvar inside this definition
+    #stack[int, 32] orig;
+    #stack[map<int>, 256] forig;
+    if (cssc::typeof(x) == cssc::typeof(forig)) {
+        x = x[1]; 
+    }
+    if (cssc::typeof(x) != cssc::typeof(orig)) {
+        cssc::to_int(x);
+    }
+    #delete[orig];
+    #delete[forig];
+    return 0 + x; //c
+}
+// Test all
+h::rt("var=");
+cssc::outln(var);
+h::rt("fvar[0]=");
+cssc::outln(fvar[0]);
+h::rt("fvar[1]=");
+cssc::outln(fvar[1]);
+h::rt("var[0]=");
+cssc::outln(var[0]);
+h::rt("var[1]=");
+cssc::outln(var[1]);
+#stack[int, 48] cpy_fvar = &fvar[1];
+fvar[1] = var[1];
+var[1] = &cpy_fvar;
+#delete[cpy_fvar];
+h::rt("cpy_fvar=");
+cssc::outln(cpy_fvar); // use of dead variable -> 0x0
+h::rt("var=");
+cssc::outln(var);
+h::rt("fvar=");
+cssc::outln(fvar);
+h::rt("fvar()=");
+cssc::outln(fvar());
+h::rt("fvar=");
+cssc::outln(fvar);
+h::rt("var()=");
+cssc::outln(var());
+h::rt("var=");
+cssc::outln(var);
+fvar();
+var();
+h::rt("fvar=");
+cssc::outln(fvar);
+h::rt("var=");
+cssc::outln(var);
+#delete[var];
+#delete[fvar];
+#unload[h];
+

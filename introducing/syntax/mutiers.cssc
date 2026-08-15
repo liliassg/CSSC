@@ -1,0 +1,16 @@
+// The PageTable expression (mutier) is one of the most trickiest but yet best ways for cross system software communication
+// while every standard allocation such as #stack, etc. in CSSC gets written into CSSC main preserved RAM,
+// you can also allocate them in a fully new and seperate RAM section wich can be shared to acsess global variables or functions
+// So i introduce the Keyword: %
+#stack[int, 32] x = 1; // This is a standard allocation, it allocated into global RAM
+#stack[int, 32] %y = 1; // This a the allocation method for using a second cssc main RAM scope.
+#stack[int, 32] %<1>z = 1; // This is a allocation into the Pagetable <1> a seperate RAM table only acsessable with same ID
+// Id-based Pagetables are represented as i64 which means it can acsess and create any RAM in an range of an 64 bit integar
+#delete[x]; // This is How you delete a standard allocation used in first main cssc RAM
+#pdelete[y]; // and #pdelete is used for pagetable-deletion used with the var/id of the pagetable
+// While pdelete accepts either adress or mutier (mutier is the name of the map {&val, adress} whats the val of % variables)
+// you can also only pass the adress: which is located in the second-slot of the map: val[1]
+cssc::outln("pagetable z: ", z);
+#pdelete[z[1]];
+// when deleted you then also cant acsess its value anymore:
+cssc::outln("unable to read: ", z[0]);

@@ -1,0 +1,47 @@
+#include("cssc.peek") peek;
+#stack[int, 8] printf;
+#define(printf) {
+    #req[peek] p;
+    //d print("string %", *optionals)
+    #scanp(printf, string, 0) *msg;
+    #scanp(printf, auto, 1) *optional = "%&";
+    #stack[array, 32] ex;
+    if (cssc::typeof(ex) != cssc::typeof(optional)) {
+        #auto[array<auto>] optional = {optional};
+    }
+    #stack[bool, 16] empty = false;
+    #stack[vector<auto>, 1028] selected;
+    #auto[string] message;
+    select (optional) ?cursor {
+        if (empty) {
+            break; // no no not required recurusions
+        }
+        if (cursor == "\0" && cursor.pos() == 0 && p::peek(optional, 0, 2) == "%&") {
+            empty = true;
+            break;
+        } else {
+            selected.push_back(&cursor);
+        }
+        jump;
+    }
+    #delete[empty];
+    #delete[optional];
+    if (!selected.empty()) {
+        select (msg) ?char {
+            if (char == "%") {
+                message += &selected.pop_front();
+                jump;  
+            } else {
+                message += &char;
+                jump;
+            }
+        }
+        msg = message;
+    }
+    #delete[selected];
+    #delete[message];
+    #delete[ex];
+    cssc::outln(msg);
+    #delete[msg];
+    return 0;
+}

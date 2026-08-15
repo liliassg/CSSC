@@ -1,0 +1,106 @@
+// A Select is a Selection of a Container
+#stack[array<int>, 1028] ContainerOfArrayInt;
+
+select (ContainerOfArrayInt) ?cursor {
+    // here is your code
+    jump; // we jump to the next index
+}
+// You can manually program the selection, optimize its behaviour and movement
+ContainerOfArrayInt.push_back(32);
+ContainerOfArrayInt.push_back(33);
+ContainerOfArrayInt.push_back(34);
+ContainerOfArrayInt.push_back(35);
+#stack[bool, 16] flag;
+select (ContainerOfArrayInt) ?cursor {
+    cssc::outln(cursor);
+    if (cursor == 33) {
+        if (flag) {
+            jump++; // or go +2 indexes
+        }
+        jump; // take shortcuits on any condition
+    }~
+        flag = true;
+        !jump; // and go back
+    }
+    if (cursor == 35) {
+        cssc::outln("end!");
+        break; // and end it when we want it to
+    }
+    jump;
+}
+ContainerOfArrayInt.push_back(0);
+ContainerOfArrayInt.push_back(36);
+// here, there is no problem, but infinite loops may cause or oob, how i can i prevent them?
+select (ContainerOfArrayInt) ?cursor {
+    cssc::outln(cursor);
+    if (cursor == 0x0) { // we check if the cursor is a null sentinel but wait... what if any data is 0?
+        cssc::outln("end!");
+        break;
+    }
+    jump;
+}
+// so there must be a smarter way... or? no! it automaticly leaves the scope, thats it!
+select (ContainerOfArrayInt) ?cursor {
+    cssc::outln(cursor.pos());
+    jump;
+    cssc::outln("you cant see me");
+}
+// But Why should i use that? isnt there a simple for() foreach() or while?. Ther is! but if you need efficience:
+ContainerOfArrayInt.push_back(532);
+ContainerOfArrayInt.push_back(292);
+ContainerOfArrayInt.push_back(235);
+ContainerOfArrayInt.push_back(453);
+ContainerOfArrayInt.push_back(432);
+ContainerOfArrayInt.push_back(132);
+#stack[int, 32] needed = 292;
+#stack[int, 32] pos;
+select (ContainerOfArrayInt) ?cursor {
+    if (needed == cursor) {
+        pos = cursor.pos();
+        break;
+    }
+    jump;
+}
+cssc::outln(needed);
+// or in such cases:
+#stack[int, 8] print;
+#define(print) {
+    //d \r157g166b166print(\r211g139b199"string \r46g30b192%\r211g139b199, \r46g30b192%\r211g139b199"\r157g166b166, \r25g235b17*\r253g233b17argument\r157g166b166, \r253g233b17argument\r157g166b166, \r253g233b17argument\r157g166b166\r157g166b166);
+    //d \r157g166b166print with 3 optional arguments
+    // those //d strings are python inspired docstrings with colors as \r<>g<>b<>
+    #scanp(print, string, 0) *msg;
+    #scanp(print, auto, 1) *opt0 = "\0";
+    #scanp(print, auto, 2) *opt1 = "\0";
+    #scanp(print, auto, 3) *opt2 = "\0";
+    #scanp(print, auto, 4) *opt3 = "\0";
+    #stack[vector<auto>, 1028] optional = {opt0, opt1, opt2, opt3};
+    #stack[vector<auto>, 1028] selected;
+    #auto[string] message;
+    select (optional) ?cursor {
+        if (cursor == "\0") {
+            break;
+        } else {
+            selected.push_back(&cursor);
+            
+        }
+        jump;
+    }
+    #delete[optional];
+    if (!selected.empty()) {
+        select (msg) ?char {
+            if (char == "%") {
+                message += &selected.pop_front();    
+            } else {
+                message += &char;
+            }
+            jump;
+        }
+        msg = message;
+    }
+    #delete[selected];
+    #delete[message];
+    cssc::outln(msg);
+    #delete[msg];
+    return 0;
+}
+print("[%]: %", "DEBUG", "I get displayed, yay!");
