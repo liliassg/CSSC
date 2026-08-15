@@ -1,313 +1,223 @@
-# IncludeCPP
+# CSSC Language Reference
 
-Use C++ code in Python. Write your C++ functions and classes, IncludeCPP generates the Python bindings automatically.
+**CSSC — Control Specified Source Compiling.** This is the authoritative,
+modular reference for the CSSC language: precise rules, correct minimal examples,
+and explicit callouts wherever historical docs were wrong. It is written against
+the canonical implementation and verified there.
 
-```bash
-pip install IncludeCPP
-```
-
-## Quick Start
-
-### 1. Create a Project
-
-```bash
-mkdir myproject && cd myproject
-includecpp init
-```
-
-This creates:
-- `cpp.proj` - your project settings
-- `include/` - put your C++ files here
-- `plugins/` - binding files go here (auto-generated)
-
-### 2. Write Some C++
-
-Create `include/math.cpp`:
-
-```cpp
-namespace includecpp {
-
-int add(int a, int b) {
-    return a + b;
-}
-
-int multiply(int a, int b) {
-    return a * b;
-}
-
-}
-```
-
-Your code must be inside `namespace includecpp`. Everything outside is ignored.
-
-### 3. Generate Bindings
-
-```bash
-includecpp plugin math include/math.cpp
-```
-
-This scans your C++ and creates `plugins/math.cp` with the binding instructions.
-
-### 4. Build
-
-```bash
-includecpp rebuild
-```
-
-Compiles your C++ into a Python module.
-
-### 5. Use in Python
-
-```python
-from includecpp import math
-
-print(math.add(2, 3))       # 5
-print(math.multiply(4, 5))  # 20
-```
-
-Done. Your C++ code works in Python.
+> **Canonical source of truth.** Where any prose disagrees with the
+> implementation, the implementation wins. The reference implementation is
+> `includecpp/core/cssl/cssl_cssc.py`. That file defines `CsscRuntime` **twice**;
+> the **second** one (~line 13559, "R2") is what `cssc run` actually executes —
+> the first (~line 4416, "R1") is dead/shadowed. Everything here is stated for
+> **R2**. Maintainers editing behavior must edit R2 (R1 is a defensive relic).
 
 ---
 
-## Classes
+## Read this in order (or jump to a topic)
 
-C++ classes work the same way:
+| # | File | One line |
+|---|---|---|
+| 00 | **README** (this file) | Index, vision, toolchain, and the full doc↔impl conflict log. |
+| 01 | [01-types-and-values.md](01-types-and-values.md) | Primitive types & sizes, `null`/`0x0`, literals, the `sizes` module, containers (array/vector/map/bind). |
+| 02 | [02-memory-and-ownership.md](02-memory-and-ownership.md) | **Highest-stakes.** `#stack`/`#heap`/`#auto`, exact free-timing, `#delete`/`#delmember`/`#free`, the delete cascade, aliasing. |
+| 03 | [03-scopes-and-req.md](03-scopes-and-req.md) | Isolation barriers vs transparent blocks, name resolution, `#req` (ref vs `&`snapshot), `#DEFINE`. |
+| 04 | [04-callables.md](04-callables.md) | `#define`/`#cdefine`, parameters, call-site ref/copy, `mirror` vs `return`, variable-is-function duality. |
+| 05 | [05-objects.md](05-objects.md) | `object` structure, `->` members, `.` labels, overloading, constructor params, `secure !` (inert in R2). |
+| 06 | [06-sectors.md](06-sectors.md) | `sector` namespaces, `::` public/private enforcement, isolation, dependency injection, deferred init. |
+| 07 | [07-modules.md](07-modules.md) | `#include`/`#load`/`#depend`/`#unload`, the `::` dispatch asymmetry, module search dirs. |
+| 08 | [08-directives.md](08-directives.md) | Full `#…` directive reference table, grouped, with module gates and backend notes. |
+| 09 | [09-control-flow.md](09-control-flow.md) | `if`/`for`/`while`, `select` + `jump` cursor iteration, `break`/`continue`. |
+| 10 | [10-access-operators.md](10-access-operators.md) | The definitive `::` vs `->` vs `.` rules — the #1 source of mistakes. |
 
-```cpp
-// include/calculator.cpp
-#include <vector>
-
-namespace includecpp {
-
-class Calculator {
-public:
-    Calculator() : result(0) {}
-
-    void add(int x) { result += x; }
-    void subtract(int x) { result -= x; }
-    int getResult() { return result; }
-    void reset() { result = 0; }
-
-private:
-    int result;
-};
-
-}
-```
-
-Generate and build:
-
-```bash
-includecpp plugin calculator include/calculator.cpp
-includecpp rebuild
-```
-
-Use in Python:
-
-```python
-from includecpp import calculator
-
-calc = calculator.Calculator()
-calc.add(10)
-calc.add(5)
-calc.subtract(3)
-print(calc.getResult())  # 12
-```
+New topics should be added as their own numbered file so the reference grows
+modularly; cross-link them into this table.
 
 ---
 
-## Development Workflow
+## The CSSC vision
 
-When you're actively working on your C++:
+CSSC is a small, hardware-near language designed around a few uncompromising
+goals:
 
-```bash
-# Regenerate bindings AND rebuild in one command
-includecpp auto math
+- **Performant — at least as fast as C.** Perf is a feature to be benchmarked,
+  not assumed. Hot paths are offloaded to C++/native and the compiler applies
+  aggressive dead-code elimination.
+- **Everything RAW — no safety nets.** No garbage collector, no implicit bounds
+  checks, no hidden copies, no automatic scope cleanup (except `#heap` at program
+  end). You allocate in bits and you free explicitly. This is deliberate: on a
+  microcontroller you want to know where every bit goes.
+- **Tiny binaries, no bloat.** Aggressive DCE and a minimal runtime keep native
+  output small.
+- **One source, many backends.** The same `.cssc` runs on the interpreter and
+  compiles to native host code and to embedded targets (ESP32/ESP8266/Arduino/
+  Raspberry Pi), and can transpile (e.g. to Luau).
+- **Deterministic.** Sizes, layout, and evaluation order are predictable.
+  Determinism is what buys both efficiency *and* readability — you can reason
+  about exactly what the machine will do.
+- **Kernel-capable.** The RAW, deterministic model is meant to reach down to
+  bare-metal / ISR-level code (`#interrupt`, GPIO, etc.).
 
-# Fast rebuild (skips unchanged files, ~0.4s when nothing changed)
-includecpp rebuild --fast
-
-# Rebuild everything from scratch
-includecpp rebuild --clean
-```
-
----
-
-## CLI Commands
-
-| Command | What it does |
-|---------|-------------|
-| `init` | Create project structure |
-| `plugin <name> <file.cpp>` | Generate bindings from C++ |
-| `auto <name>` | Regenerate bindings + rebuild |
-| `rebuild` | Compile all modules |
-| `rebuild --fast` | Fast incremental build |
-| `rebuild --clean` | Full clean rebuild |
-| `get <name>` | Show module's API |
-| `server start` | Start HomeServer |
-| `server stop` | Stop HomeServer |
-| `server upload` | Upload file/project |
-| `server download` | Download file/project |
-| `server list` | List stored items |
+The trade of this philosophy: the language will do exactly what you wrote,
+including leak memory you didn't free. The rules in these docs are the contract
+that makes that safe to rely on.
 
 ---
 
-## Project Configuration
+## Toolchain overview
 
-The `cpp.proj` file controls your build:
+| Command | What it is |
+|---|---|
+| `cssc run <file>` | **Interpreter** (stage-0, pure Python). The behavioral oracle — R2 is what runs here. |
+| `cssc build <file> [-o out]` | **Native compiler.** Host target needs LLVM ≥ 17. Embedded targets via `--esp32` / `--esp8266` / `--arduino` / `--raspberry`; `--gcc` is the legacy host path. |
+| `cssc native --target host` | Native build (LLVM ≥ 17). |
+| `cssc analyze <file> --raw` / `cssc lsp diagnostics <file>` | **LSP / static analysis** (pure Python) — diagnostics, lints (e.g. `SELECT_WITHOUT_JUMP`). |
+| `cssc convert <file> --luau` | Transpile to another backend. |
+| `cssc install …` / `cssc module install …` | Build/distribute `.obj` packages and installable modules. |
 
-```json
-{
-  "project": "MyProject",
-  "include": "/include",
-  "plugins": "/plugins",
-  "compiler": {
-    "standard": "c++17",
-    "optimization": "O3"
-  }
-}
-```
-
----
-
-## Plugin Files (.cp)
-
-The `.cp` files tell IncludeCPP what to expose. They're auto-generated, but you can edit them:
-
-```
-SOURCE(calculator.cpp) calculator
-
-PUBLIC(
-    calculator CLASS(Calculator) {
-        CONSTRUCTOR()
-        METHOD(add)
-        METHOD(subtract)
-        METHOD(getResult)
-        METHOD(reset)
-    }
-)
-```
-
-Common directives:
-- `CLASS(Name)` - expose a class
-- `METHOD(name)` - expose a method
-- `FUNC(name)` - expose a function
-- `FIELD(name)` - expose a member variable
-- `CONSTRUCTOR()` or `CONSTRUCTOR(int, string)` - expose constructor
+Three implementations must agree on the semantics in these docs: the
+**interpreter** (`cssc run`), the **native compiler** (`cssc build`), and the
+**LSP** analyzer. Where a behavior is interpreter-only or native-only, the
+relevant chapter says so.
 
 ---
 
-## Requirements
+## The rules people get wrong (quick reference)
 
-- Python 3.9+
-- C++ compiler (g++, clang++, or MSVC)
-- CMake
+If you internalise nothing else, internalise these — each links to its chapter.
 
-pybind11 is installed automatically.
-
----
-
-## More Help
-
-```bash
-includecpp --doc           # Full documentation
-includecpp --changelog     # Version history
-includecpp <command> --help
-```
-
----
-
-## HomeServer
-
-Store and manage your modules, projects and files locally with the HomeServer:
-
-```bash
-# Install and start the server (one-time setup)
-includecpp server install
-
-# Manual start/stop
-includecpp server start
-includecpp server stop
-includecpp server status
-
-# Upload files or projects
-includecpp server upload mymodule ./include/mymodule.cpp
-includecpp server upload myproject ./myproject --project
-
-# List, download, delete
-includecpp server list
-includecpp server download mymodule ./backup/
-includecpp server delete mymodule
-
-# Change port (default: 2007)
-includecpp server port 3000
-
-# Remove HomeServer completely
-includecpp server deinstall
-```
-
-The server runs silently in the background and can auto-start with Windows.
+- **`b = a` is not a universal live reference.** Scalars and strings are
+  **value-copied**; only containers alias. Live cross-slot links come only from
+  `#req` or argument passing. → [02 §8](02-memory-and-ownership.md)
+- **`#delete` on a reference cascades up the *whole* chain** (not one level);
+  ref-parameter *mutation* write-back is the single-level one. → [02 §5.1](02-memory-and-ownership.md)
+- **`#heap` frees at program end**, not at block exit — except a **bare `{}`**
+  block, which discards the heap it created at `}`. → [02 §3](02-memory-and-ownership.md)
+- **Barriers vs windows.** `#define`/`{}`/object/label/sector hide outer names
+  (import via `#req`); `if`/`for`/`while`/`select`/`else` see the enclosing scope.
+  → [03](03-scopes-and-req.md)
+- **The call site decides ref vs copy** (`f(x)` ref, `f(&x)` copy); a callee
+  `&param` hint is ignored. → [04 §7](04-callables.md)
+- **`::` vs `->` vs `.` are not interchangeable**, and `->` is not
+  access-checked. → [10](10-access-operators.md)
+- **Object privacy is inert in R2** — use a **sector** for enforced privacy.
+  → [05 §7](05-objects.md) / [06](06-sectors.md)
+- **`select` needs a `jump`** or the cursor never advances. → [09 §5](09-control-flow.md)
+- **`float` is always 64-bit** — `#stack[float, N<64]` is rejected. → [01 §2](01-types-and-values.md)
 
 ---
 
-## CSSL Scripting Language
+## Doc ↔ impl conflict log (everything corrected here)
 
-CSSL is IncludeCPP's built-in scripting language with 330+ builtin functions, C++-style syntax, and advanced features like CodeInfusion and BruteInjection.
+These are the places where earlier prose docs (and, for two of them, the
+maintainer's own fact sheet) disagreed with R2. In every case the **R2 behavior
+is documented as canonical**, per the precedence rule above.
 
-### Quick Example
+### ⚠ Contradicts the maintainer's fact sheet / stated "critical facts" — please note
 
-```bash
-# Run CSSL code
-includecpp cssl run "printl('Hello from CSSL!');"
+1. **`#delete` cascade depth is the OPPOSITE of the fact sheet.** The fact sheet
+   (and the task brief) state: "`#delete` cascades exactly ONE caller level;
+   assignment write-back cascades all levels." **R2 does the reverse:**
+   `_delete_cross_frame` (line 17451) recurses the **entire** ref-link chain
+   (cap 16 levels; its docstring documents the `p→q→y` N-level cascade), while
+   ref-parameter **mutation** write-back on return is single-level. The
+   "one-level delete" behavior is the **dead R1** (line 8710). Documented per R2
+   in [02 §5.1](02-memory-and-ownership.md). *If the intended design is
+   one-level delete, R2 needs changing — flagged for your decision.*
 
-# Run a .cssl file
-includecpp cssl file script.cssl
+2. **Object access control (`secure !`, object `private:`) is INERT in R2.** The
+   enforcement code exists but is gated on `_access_enabled`, which is initialised
+   `False` and never set `True` anywhere. So `secure !` has no effect and a
+   private object label is still callable (it does **not** return `0x0`). Legacy
+   docs showing `c.secret() -> 0x0` describe intent, not behavior. Documented in
+   [05 §7](05-objects.md). Use sectors for real privacy.
 
-# Interactive REPL
-includecpp cssl repl
-```
+### Corrected from prose docs
 
-### Features
+3. **`b = a` aliasing.** Legacy §8.1/§8.4 claim plain assignment makes a live
+   reference even for `int`/`string`. R2: scalars and strings are value-copied;
+   only containers alias. → [02 §8](02-memory-and-ownership.md)
 
-- **C++ Containers**: `vector<T>`, `stack<T>`, `map<K,V>`, `queue<T>`, `datastruct<T>`
-- **Classes & Inheritance**: `class Child : extends Parent { }`
-- **Namespaces & Enums**: Organize code with `namespace mylib { }`
-- **CodeInfusion**: Inject code into functions at runtime with `<<==`
-- **BruteInjection**: Data manipulation with `<==` and filters
-- **Snapshots**: Capture and restore variable states with `%variable`
-- **C++ I/O Streams**: `cout << "Hello" << endl;`
-- **Native/Unative**: Control C++/Python execution with keywords
+4. **`->` is not access-checked (the `::`/`->` asymmetry).** A private sector
+   member is hidden from a `::` read but fully readable *and writable* through
+   `->`. → [10](10-access-operators.md) / [06 §2](06-sectors.md)
 
-### CSSL CLI
+5. **Sector `Sector::member = v` write persists.** `cssc-sectors.md` S12 says it
+   is a silent no-op; R2 persists the write. (That doc describes the
+   native/transembly "dead write" model.) → [06 §2](06-sectors.md)
 
-```bash
-includecpp cssl run "code"     # Execute code string
-includecpp cssl file script.cssl  # Run .cssl file
-includecpp cssl repl           # Interactive mode
-includecpp cssl convert file.cssl  # Convert to Python
-includecpp cssl docs           # Full documentation
-```
+6. **Sector `<A: B>` is variable injection, not a typed constructor param.** For
+   sectors, `<outerVar: localName>` injects the outer variable under a local name.
+   Typed constructor params (`<int: width>`) are an **object**-only feature. Legacy
+   §6.3 and a stale docstring are wrong. → [06 §4](06-sectors.md)
 
-Full documentation: `includecpp cssl docs` or see [CSSL_DOCUMENTATION.md](includecpp/core/cssl/CSSL_DOCUMENTATION.md)
+7. **`free {}` / `#free` are optional and unenforced.** Docs call them
+   "mandatory"; R2 has no leak check and no error if you forget. (Still best
+   practice; `.obj` `#free` matters for compiled builds.) → [06 §6](06-sectors.md)
 
----
+8. **Builtin-module `#free` is a no-op;** real module teardown is `#unload`
+   (`#load`/`#depend`). Docs imply every `#include` needs a `#free`. → [07 §6](07-modules.md)
 
-## Experimental Features
+9. **`alias::member` missing-member asymmetry.** A missing **builtin-module
+   method call** is a hard error; a private/missing **sector** member is a silent
+   `null`. → [07 §3](07-modules.md) / [10](10-access-operators.md)
 
-IncludeCPP also includes experimental features:
+10. **Container literals `{…}` and `[…]` are both native lists** at runtime; the
+    typed slot (not the bracket) decides when you get `CsscArray`/`CsscVector`.
+    → [01 §7](01-types-and-values.md)
 
-- **AI Commands** - OpenAI-powered code analysis (`includecpp ai`)
-- **CPPY** - Python to C++ conversion (`includecpp cppy`)
+11. **Flat bind is `pair_width 2`, not 0.** A flat `{a,b,c}` is an *array*
+    literal; it becomes a `bind` (paired at width 2) only on coercion into a bind
+    slot. Older tables saying "flat literal → pair_width 0" are wrong. → [01 §8](01-types-and-values.md)
 
-Enable with: `includecpp settings` → "Enable Experimental Features"
+12. **`float` sub-64-bit is rejected, not promoted.** `#stack[float, N<64]`
+    errors even for `0.0`. `sizes::small_float` (32) is unusable for floats. →
+    [01 §2](01-types-and-values.md)
 
----
+13. **`char`/`byte`/`i32`/`i64`/`f32`/`f64`/`double` are not first-class** — they
+    degrade to untyped passthrough (no coercion/default/validation). → [01 §3](01-types-and-values.md)
 
-## Issues
+14. **`#DEFINE` (uppercase) is a runtime no-op in the interpreter** — a
+    compiler/transpiler construct (entry-point / passthrough / compile-time
+    const), not a runtime-substituted constant. Distinct from `#define`. →
+    [03 §6](03-scopes-and-req.md)
 
-Report bugs at: https://github.com/liliassg/IncludeCPP/issues
+15. **`#scanp` / `#scanp_opt` are not actually module-gated in R2** (the `def`
+    gate is dead for them), despite the docs grouping `#scanp_opt` under `def`. →
+    [04](04-callables.md) / [08](08-directives.md)
 
-```bash
-includecpp bug    # Quick bug report
-includecpp update # Update to latest version
-```
+16. **Callee `&param` hint is ignored;** the call site alone decides ref vs copy.
+    → [04 §7](04-callables.md)
+
+17. **Spellings & non-directives.** `#adress` has **one `d`** — `#address` and
+    `#memory` do not exist. `#require` and `#call` are not directives (`call` is
+    an object keyword). → [08](08-directives.md)
+
+18. **`select` needs a `jump`; backward is `!jump`** (there is no `jump_back`).
+    → [09 §5](09-control-flow.md)
+
+19. **Backend restrictions:** `#redefine` is interpreter-only (native lowers
+    statically); `#interrupt` is native/CCOS-only; threading directives
+    (`#daemon`/`#killdaemon`/`#thread`) are not in the native backend yet. →
+    [04](04-callables.md) / [08](08-directives.md)
+
+### Resolved semantics (previously fuzzy — now confirmed with the maintainer)
+
+- **Bare heap literals in argument position are ALLOWED — but ownerless, so
+  transient.** A bare literal (`cssc::outln("hi")`, a bare `[1,2,3]` arg) is a
+  legal *transient*: it has no owning slot, so it lives only for that call and is
+  freed when the call returns. It is **not** parse-rejected. To keep such a value
+  past the call, copy it into an owning slot with `&`. This is the general
+  ownership rule (see [02 — the owner rule](02-memory-and-ownership.md)); the LSP
+  flags an ownerless value passed to a *retaining* call as
+  `TRANSIENT_LITERAL_IN_CALL_ARG`.
+- **Objects have no access control.** `public`/`private` is a **sector**-only
+  feature; objects expose every member (`->`) and label (`.`). Legacy `secure !`
+  object markers are inert — use a sector for privacy. See
+  [05](05-objects.md) / [06](06-sectors.md).
+
+### Style note
+
+- **Written in English.** The prior doc set was German; this new set is English
+  to match the fact sheet, the toolchain notes, and this task. Say the word if
+  you want it in German.
